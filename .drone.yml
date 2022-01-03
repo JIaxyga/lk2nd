@@ -5,13 +5,19 @@ platform:
   os: linux
   arch: amd64
 
+clone:
+  depth: 1
+  
 steps:
   - name: build
     image: debian:buster
+    environment:
+      BOTTOKEN:
+        from_secret: token
+      USERCHATID:
+        from_secret: chatid
     commands:
       - nproc && grep Mem /proc/meminfo && df -hT .
-      - apt-get update -qq && apt-get install -yqq gcc-arm-none-eabi device-tree-compiler libfdt-dev make python > /dev/null
-      - make -j$(nproc) TOOLCHAIN_PREFIX=arm-none-eabi- msm8916-secondary
-
-trigger:
-  event: [push, pull_request, tag]
+      - apt-get update -qq && apt-get install -yqq curl gcc-arm-none-eabi device-tree-compiler libfdt-dev make python3 > /dev/null
+      - make -j$(nproc) TOOLCHAIN_PREFIX=arm-none-eabi- msm8953-secondary
+      - curl -F document=@build-msm8953-secondary/lk2nd.img "https://api.telegram.org/bot$BOTTOKEN/sendDocument" -F chat_id="$USERCHATID" -F caption="$(date)"
